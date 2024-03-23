@@ -46,7 +46,7 @@ def check_solution(problem_statement, code, output):
 
         convo = model.start_chat(history=[])
 
-        convo.send_message(f"問題文:\n{problem_statement}\n\nコード:\n{code}\n\nターミナル出力:\n{output}\n\n提供されたコードが問題文を正しく解決しているかどうか確認してください。構文エラーがあったり、問題文から予想される出力と一致しない場合、<error>間違っています。</error>と答えてください。 解答が間違っていた場合、修正すべき点を明確に説明してください。")
+        convo.send_message(f"問題文:\n{problem_statement}\n\nコード:\n{code}\n\nターミナル出力:\n{output}\n\n提供されたコードが問題文を正しく解決しているかどうか確認してください。構文エラーがあったり、問題文から予想される出力と一致しない場合、<error>間違っています。</error>と答えてください。 解答が間違っていた場合、修正すべき点を明確に説明してください。また、日本語で答えてください。")
         time.sleep(1)
         response = convo.last.text
 
