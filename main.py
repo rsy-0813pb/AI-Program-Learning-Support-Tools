@@ -35,16 +35,16 @@ class MainWindow(QWidget):
         right_splitter.addWidget(api_key_widget)
 
         self.api_key_input = QLineEdit()
-        self.api_key_input.setPlaceholderText("Enter Google Gemini API Key")
+        self.api_key_input.setPlaceholderText("Google Gemini API Keyを入力してください...")
         api_key_layout.addWidget(self.api_key_input)
 
-        update_api_key_button = QPushButton('Update API Key')
+        update_api_key_button = QPushButton('APIキーの更新')
         update_api_key_button.clicked.connect(self.update_api_key)
         update_api_key_button.setStyleSheet("QPushButton { background-color: #3E4451; color: #ABB2BF; }")
         api_key_layout.addWidget(update_api_key_button)
 
         self.question_text = QTextEdit()
-        self.question_text.setPlaceholderText("Write the problem statement here...")
+        self.question_text.setPlaceholderText("ここに問題文を書く...")
         right_splitter.addWidget(self.question_text)
 
         bottom_splitter = QSplitter(Qt.Horizontal)

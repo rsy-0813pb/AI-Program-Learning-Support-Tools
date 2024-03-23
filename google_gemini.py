@@ -11,7 +11,7 @@ def set_api_key(key):
 
 def check_solution(problem_statement, code, output):
     if not api_key:
-        return "Please enter a valid Google Gemini API key."
+        return "有効なGoogle Gemini APIキーを入力してください"
 
     try:
         generation_config = {
@@ -46,14 +46,14 @@ def check_solution(problem_statement, code, output):
 
         convo = model.start_chat(history=[])
 
-        convo.send_message(f"Problem Statement:\n{problem_statement}\n\nCode:\n{code}\n\nOutput:\n{output}\n\nPlease check if the provided code correctly solves the problem statement. If there are any syntax errors or the output does not match the expected output based on the problem statement, the solution is incorrect. Provide a clear explanation of what needs to be fixed if the solution is incorrect.")
+        convo.send_message(f"問題文:\n{problem_statement}\n\nコード:\n{code}\n\nターミナル出力:\n{output}\n\n提供されたコードが問題文を正しく解決しているかどうか確認してください。構文エラーがあったり、問題文から予想される出力と一致しない場合、<error>間違っています。</error>と答えてください。 解答が間違っていた場合、修正すべき点を明確に説明してください。")
         time.sleep(1)
         response = convo.last.text
 
-        if "incorrect" in response.lower() or "error" in response.lower():
-            return f"Incorrect solution. Hint: {response}"
+        if "<error>間違っています。</error>" in response.lower() or "error" in response.lower():
+            return f"間違っています。 \nヒント: \n{response}"
         else:
-            return "Correct solution!"
+            return "正解です!"
 
     except exceptions.InvalidArgument as e:
-        return f"Invalid API key. Please enter a valid Google Gemini API key. Error: {str(e)}"
+        return f"APIキーが無効です。有効なGoogle Gemini APIキーを入力してください。エラー: {str(e)}"
