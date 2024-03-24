@@ -1,14 +1,29 @@
 import sys
 import os
 import json
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QLabel, QFileDialog, QLineEdit, QSplitter
-from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QLabel, QFileDialog, QLineEdit, QSplitter, QScrollArea, QMessageBox
+from PyQt5.QtGui import QColor, QPalette, QFont
 from PyQt5.QtCore import Qt
 from code_editor import CodeEditor
 from terminal import Terminal
 from google_gemini import check_solution, set_api_key
 
 CONFIG_FILE = 'config.json'
+
+class ScrollLabel(QScrollArea):
+    def __init__(self, *args, **kwargs):
+        QScrollArea.__init__(self, *args, **kwargs)
+        self.setWidgetResizable(True)
+        content = QWidget(self)
+        self.setWidget(content)
+        lay = QVBoxLayout(content)
+        self.label = QLabel(content)
+        self.label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.label.setWordWrap(True)
+        lay.addWidget(self.label)
+
+    def setText(self, text):
+        self.label.setText(text)
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -24,6 +39,7 @@ class MainWindow(QWidget):
         main_splitter.addWidget(top_splitter)
 
         self.editor = CodeEditor()
+        self.editor.setFont(QFont('Consolas', 12))
         top_splitter.addWidget(self.editor)
 
         right_splitter = QSplitter(Qt.Vertical)
@@ -58,7 +74,7 @@ class MainWindow(QWidget):
         right_bottom_widget.setLayout(right_bottom_layout)
         bottom_splitter.addWidget(right_bottom_widget)
 
-        self.result_label = QLabel()
+        self.result_label = ScrollLabel()
         right_bottom_layout.addWidget(self.result_label)
 
         button_layout = QHBoxLayout()
@@ -74,15 +90,15 @@ class MainWindow(QWidget):
         clear_button.setStyleSheet("QPushButton { background-color: #3E4451; color: #ABB2BF; }")
         button_layout.addWidget(clear_button)
 
-        open_button = QPushButton('Open')
-        open_button.clicked.connect(self.open_file)
-        open_button.setStyleSheet("QPushButton { background-color: #3E4451; color: #ABB2BF; }")
-        button_layout.addWidget(open_button)
+        self.open_button = QPushButton('Open')
+        self.open_button.clicked.connect(self.open_file)
+        self.open_button.setStyleSheet("QPushButton { background-color: #3E4451; color: #ABB2BF; }")
+        button_layout.addWidget(self.open_button)
 
-        save_button = QPushButton('Save')
-        save_button.clicked.connect(self.save_file)
-        save_button.setStyleSheet("QPushButton { background-color: #3E4451; color: #ABB2BF; }")
-        button_layout.addWidget(save_button)
+        self.save_button = QPushButton('Save')
+        self.save_button.clicked.connect(self.save_file)
+        self.save_button.setStyleSheet("QPushButton { background-color: #3E4451; color: #ABB2BF; }")
+        button_layout.addWidget(self.save_button)
 
         check_button = QPushButton('Check')
         check_button.clicked.connect(self.check_solution)
@@ -90,6 +106,8 @@ class MainWindow(QWidget):
         right_bottom_layout.addWidget(check_button)
 
         self.load_config()
+        self.set_dark_titlebar()
+        self.update_save_button_state()
 
     def run_code(self):
         code = self.editor.toPlainText()
@@ -101,17 +119,46 @@ class MainWindow(QWidget):
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Python Files (*.py);;All Files (*)", options=options)
         if file_name:
-            with open(file_name, 'r') as f:
-                content = f.read()
-                self.load_content(content)
+            try:
+                with open(file_name, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    self.load_content(content)
+                    self.current_file = file_name
+                    self.update_save_button_state()
+            except UnicodeDecodeError:
+                QMessageBox.warning(self, "エンコーディングエラー", "ファイルのエンコーディングがUTF-8ではありません。\nファイルを UTF-8 で保存し直してください。")
 
     def save_file(self):
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Python Files (*.py);;All Files (*)", options=options)
+        if hasattr(self, 'current_file'):
+            file_name = self.current_file
+            self.save_file_as(file_name)
+        else:
+            self.save_file_as()
+
+    def save_file_as(self, file_name=None):
+        if not file_name:
+            options = QFileDialog.Options()
+            file_name, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Python Files (*.py);;All Files (*)", options=options)
+
         if file_name:
             content = self.get_content()
-            with open(file_name, 'w') as f:
+            gemini_answer = self.result_label.label.text()
+
+            file_name = file_name.replace(' ok.py', '.py').replace(' retry.py', '.py')
+
+            if "正解です!" in gemini_answer:
+                file_name = file_name.replace('.py', ' ok.py')
+            elif "間違っています。" in gemini_answer:
+                file_name = file_name.replace('.py', ' retry.py')
+
+            if hasattr(self, 'current_file') and self.current_file != file_name:
+                os.remove(self.current_file)
+
+            with open(file_name, 'w', encoding='utf-8') as f:
                 f.write(content)
+
+            self.current_file = file_name
+            self.update_save_button_state()
 
     def check_solution(self):
         api_key = self.api_key_input.text()
@@ -120,6 +167,7 @@ class MainWindow(QWidget):
         code = self.editor.toPlainText()
         output = self.terminal.get_output()
         result = check_solution(problem_statement, code, output)
+        result = result.replace('<error>', '').replace('</error>', '')
         self.result_label.setText(result)
 
     def update_api_key(self):
@@ -142,7 +190,7 @@ class MainWindow(QWidget):
         problem_statement = self.question_text.toPlainText()
         code = self.editor.toPlainText()
         output = self.terminal.get_output()
-        gemini_answer = self.result_label.text()
+        gemini_answer = self.result_label.label.text()
 
         content = f'"""\nProblem Statement:\n{problem_statement}\n\nCode:\n{code}\n\nTerminal Output:\n{output}\n\nGemini Answer:\n{gemini_answer}\n"""\n\n{code}'
         return content
@@ -171,6 +219,20 @@ class MainWindow(QWidget):
         if len(parts) > 1:
             return parts[1].split('\n\n')[0].strip()
         return ''
+
+    def update_save_button_state(self):
+        if hasattr(self, 'current_file'):
+            self.save_button.setText('Save')
+            self.save_button.setEnabled(True)
+        else:
+            self.save_button.setText('Save As...')
+            self.save_button.setEnabled(True)
+
+    def set_dark_titlebar(self):
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+        self.setPalette(palette)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

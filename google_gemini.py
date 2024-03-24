@@ -51,7 +51,7 @@ def check_solution(problem_statement, code, output):
         response = convo.last.text
 
         if "<error>間違っています。</error>" in response.lower() or "error" in response.lower():
-            return f"間違っています。 \nヒント: \n{response}"
+            return f"間違っています。 \nAI: \n{response}"
         else:
             return "正解です!"
 
