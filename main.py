@@ -167,7 +167,7 @@ class MainWindow(QWidget):
         code = self.editor.toPlainText()
         output = self.terminal.get_output()
         result = check_solution(problem_statement, code, output)
-        result = result.replace('<error>', '').replace('</error>', '')
+        result = result.replace('<error>間違っています。</error>', '').replace('error', '')
         self.result_label.setText(result)
 
     def update_api_key(self):
