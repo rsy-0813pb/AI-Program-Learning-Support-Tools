@@ -17,3 +17,8 @@
    ```
    python main.py
    ```
+
+## Google Gemini APIの取得方法
+
+1.[GoogleのAI StudioのAPIページ](https://aistudio.google.com/app/apikey)にアクセスします。
+2.
