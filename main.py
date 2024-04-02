@@ -303,23 +303,6 @@ class MainWindow(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    
-    # アプリケーションのスタイルをFusionに設定
-    app.setStyle('Fusion')
-    
-    # アプリケーションのパレットをダークモードに設定
-    palette = app.palette()
-    palette.setColor(palette.Window, QColor(40, 44, 52))
-    palette.setColor(palette.WindowText, QColor(171, 178, 191))
-    palette.setColor(palette.Base, QColor(40, 44, 52))
-    palette.setColor(palette.AlternateBase, QColor(53, 57, 69))
-    palette.setColor(palette.ToolTipBase, QColor(40, 44, 52))
-    palette.setColor(palette.ToolTipText, QColor(171, 178, 191))
-    palette.setColor(palette.Text, QColor(171, 178, 191))
-    palette.setColor(palette.Button, QColor(62, 68, 81))
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
 
     # アプリケーションのスタイルをFusionに設定
     app.setStyle('Fusion')
